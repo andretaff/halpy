@@ -6,6 +6,9 @@ class Tabuleiro:
     def __init__(self):
         self.corMover = engine.constants.WHITE
         self.board = []
+        self.vBranco = 0
+        self.vPreto = 0
+        self.roque = engine.constants.ROQUE_NENHUM
         for i in range(engine.constants.ALLBITBOARDS):
             self.board.append(engine.constants.POSITION_NONE)
      
@@ -15,16 +18,71 @@ class Tabuleiro:
         index = ((bitboard * 0x78291ACF)& 0xffffffff) >> 26
         return engine.constants.lsb_64_table[index]
 
+    def getPecaBB(cor,bb):
+        i = cor
+        peca = engine.constants.PECA_NENHUM
+        while i <= engine.constants.GB:
+            if self.board[i]&bb:
+                return i
+            i = i + 2
+        return peca
+
+
     def adicionarPecaHumana(self,peca, posicao):
-        self.adicionarPeca(peca,2**posicao,posicao)
+        self.adicionarPeca(peca,2**posicao)
         
-    def adicionarPeca(self,peca,bitboard,posicao):
+    def adicionarPeca(self,peca,bitboard):
         self.board[peca] ^= bitboard
         if peca%2==0:
             self.board[engine.constants.PW] ^= bitboard
+            self.vBranco = self.vBranco + engine.constants.valores[peca]
         else:
             self.board[engine.constants.PB] ^= bitboard
+            self.vPreto = self.vPreto + engine.constants.valores[peca]
 
+
+    def removerPeca(self,peca,bitboard):
+        self.board[peca] ^= bitboard
+        if peca%2==0:
+            self.board[engine.constants.PW] ^= bitboard
+            self.vBranco = self.vBranco - engine.constants.valores[peca]
+        else:
+            self.board[engine.constants.PB] ^= bitboard
+            self.vPreto = self.vPreto - engine.constants.valores[peca]
+
+    def realizarMovimento(self,movimento):
+        if movimento.tipo == engine.constants.MNORMAL:
+            self.removerPeca(movimento.peca,movimento.bbDe)
+            self.adicionarPeca(movimento.peca,movimento.bbPara)
+        if movimento.tipo == engine.constants.MDUPLO:
+            self.removerPeca(movimento.peca,movimento.bbDe)
+            self.adicionarPeca(movimento.peca,movimento.bbPara)
+            if self.corMover == 0:
+                self.enPassant = movimento.bbPara >> 8
+            else:
+                self.enPassant = movimento.bbPara << 8
+
+        if movimento.tipo == engine.constants.MCAP:
+            self.removerPeca(movimento.peca,movimento.bbDe)
+            self.removerPeca(movimento.pecaCaptura, movimento.bbPara)
+            self.adicionarPeca(movimento.peca,movimento.bbPara)
+
+        self.corMover = 1-self.corMover
+
+    def desfazerMovimento(self,movimento):
+        if movimento.tipo == engine.constants.MNORMAL:
+            self.removerPeca(movimento.peca,movimento.bbPara)
+            self.adicionarPeca(movimento.peca,movimento.bbDe)
+        if movimento.tipo == engine.constants.MDUPLO:
+            self.removerPeca(movimento.peca,movimento.bbPara)
+            self.adicionarPeca(movimento.peca,movimento.bbDe)
+
+        if movimento.tipo == engine.constants.MCAP:
+            self.removerPeca(movimento.peca,movimento.bbPara)
+            self.adicionarPeca(movimento.pecaCaptura,movimento.bbDePara)
+            self.adicionarPeca(movimento.peca,movimento.bbDe)
+
+        self.corMover = 1-self.corMover
     def print(self):
         linha = ''
         for i in range(64):
@@ -240,7 +298,64 @@ class Tabuleiro:
                                             lsb)
                 lista.append(mov)
                 normais = normais & (normais -1)
+        else:
+            peca = engine.constants.PPB
+            bb = self.board[peca]
+            bbAmigos = self.board[engine.constants.PB]
+            bbInimigos = self.board[engine.constants.PW]
+            bbTodas = bbAmigos | bbInimigos
+            normais = (bb<<8) & ~ bbTodas
+            duplos = ((normais & engine.constants.R[3]) << 8) & ~bbTodas
 
+            while duplos > 0:
+                lsb = (duplos & -duplos)  & 0xffffffffffffffff
+                mov = engine.move.Movimento(self.corMover,
+                                            peca,
+                                            0,
+                                            engine.constants.MDUPLO,
+                                            lsb>>16,
+                                            lsb)
+                lista.append(mov)
+                duplos = duplos & (duplos -1)
+
+            while normais > 0:
+                lsb = (normais & -normais) & 0xffffffffffffffff
+                mov = engine.move.Movimento(self.corMover,
+                                            peca,
+                                            0,
+                                            engine.constants.MNORMAL,
+                                            lsb>>8,
+                                            lsb)
+                lista.append(mov)
+                normais = normais & (normais -1)
+
+    def genMovsRei(self,lista,capturas):
+        peca = self.corMover + engine.constants.PGW
+        bb = self.board[peca]
+        bbTodas = self.board[engine.constants.PB] | self.board[engine.constants.PW]
+        if capturas:
+            bbInimigas = self.board[engine.constants.PB-self.corMover] 
+            bbTo = engine.constants.mRei[self.indice(bb)]&bbInimigas
+        else:
+            bbTo = engine.constants.mRei[self.indice(bb)]&~bbTodas
+        while bbTo > 0:
+            lsb = (bbTo & -bbTo) & 0xffffffffffffffff
+            if capturas:
+                pecaAlvo = self.getPecaBB(1-self.corMover,lsb)
+                tipo = engine.constants.MCAP
+            else:
+                pecaAlvo = 0xFF
+                tipo = engine.constants.MNORMAL
+            mov = engine.move.Movimento(self.corMover,
+                                        peca,
+                                        pecaAlvo,
+                                        tipo,
+                                        bb,
+                                        lsb)
+            lista.append(mov)
+            bbTo = bbTo & (bbTo -1)
+
+            
     def genMovimentos(self):
         self.listaMovs = []
         self.genMovsPeao(self.listaMovs)
@@ -249,5 +364,6 @@ class Tabuleiro:
         self.genMovsTorre(engine.constants.PRW+self.corMover, self.listaMovs)
         self.genMovsBispo(engine.constants.PQW+self.corMover, self.listaMovs)
         self.genMovsTorre(engine.constants.PQW+self.corMover, self.listaMovs)
+        self.genMovsRei(self.listaMovs,False)
         return self.listaMovs
 

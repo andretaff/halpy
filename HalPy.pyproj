@@ -19,8 +19,14 @@
     <VisualStudioVersion Condition=" '$(VisualStudioVersion)' == '' ">10.0</VisualStudioVersion>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="engine\avaliador.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="engine\bitboard.py" />
     <Compile Include="engine\board.py" />
+    <Compile Include="engine\negamax.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="engine\constants.py" />
     <Compile Include="engine\move.py" />
     <Compile Include="interface\fenString.py" />
