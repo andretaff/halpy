@@ -25,10 +25,10 @@ ALLBITBOARDS = 16
 POSITION_NONE = 0
 
 ROQUE_NENHUM = 0
-ROQUE_PB = 0x00000000000000FF
-ROQUE_GB = 0x000000000000FF00
-ROQUE_PP = 0x0000000000FF0000
-ROQUE_GP = 0x00000000FF000000
+ROQUE_PW = 0x00000000000000FF
+ROQUE_GW = 0x000000000000FF00
+ROQUE_PB = 0x0000000000FF0000
+ROQUE_GB = 0x00000000FF000000
 
 R={}
 R[1] = 0x00000000000000FF
@@ -53,6 +53,9 @@ C[8] = 0x8080808080808080
 index={}
 mCavalo = {}
 mRei = {}
+aPeao = []
+aPeao.append({})
+aPeao.append({})
 k = 0
 for i in range(8):
     for j in range(8):
@@ -79,6 +82,11 @@ for i in range(8):
         mRei[k] = mRei[k] | (pos & (~(R[8]|C[8])))<<9
         mRei[k] = mRei[k] | (pos & (~(R[1]|C[1])))>>9
         mRei[k] = mRei[k] | (pos & (~(R[1]|C[8])))>>7
+
+        aPeao[0][k] = (pos & (~C[1])) >> 9
+        aPeao[0][k] = aPeao[0][k] | (pos & (~C[8])) >> 7
+        aPeao[1][k] = (pos & (~C[1])) << 7
+        aPeao[1][k] = aPeao[1][k] | (pos & (~C[8])) << 9
         
         k = k + 1
 
@@ -90,6 +98,8 @@ lsb_64_table= [63, 30,  3, 32, 59, 14, 11, 33,60, 24, 50,  9, 55, 19, 21, 34,61,
 MNORMAL = 0
 MDUPLO = 1
 MCAP = 2
+MROQUEPEQ = 3
+MROQUEGRD = 4
 
 valores = [100,100,300,300,320,320,500,500,900,900,0,0]
 
