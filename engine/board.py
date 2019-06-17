@@ -10,8 +10,12 @@ class Tabuleiro:
         self.vPreto = 0
         self.roque = engine.constants.ROQUE_NENHUM
         self.enPasant = 0
+        self.check = False
         for i in range(engine.constants.ALLBITBOARDS):
             self.board.append(engine.constants.POSITION_NONE)
+
+    def invalido(self):
+        return self.casaAtacada(self.board[engine.constants.PGB-self.corMover],1-self.corMover)
      
     def indice(self,bitboard):
         bitboard = bitboard ^ (bitboard-1)

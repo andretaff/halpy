@@ -17,7 +17,12 @@ class Negamax():
             for mov in listaMovs:
                 #mov.print()
                 self.tabuleiro.realizarMovimento(mov)
-                novoValor = -self.run(-beta,-alfa, profundidade - 1)
+                #mov.print()
+                #self.tabuleiro.print()
+                if self.tabuleiro.invalido():
+                    novoValor = +99999999
+                else:
+                    novoValor = -self.run(-beta,-alfa, profundidade - 1)
                 self.tabuleiro.desfazerMovimento(mov)
                 if novoValor > valor:
                     valor = novoValor
