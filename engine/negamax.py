@@ -15,6 +15,7 @@ class Negamax():
             valor = -9999999999
             listaMovs = self.tabuleiro.genMovimentos()
             for mov in listaMovs:
+                #mov.print()
                 self.tabuleiro.realizarMovimento(mov)
                 novoValor = -self.run(-beta,-alfa, profundidade - 1)
                 self.tabuleiro.desfazerMovimento(mov)
@@ -29,7 +30,7 @@ class Negamax():
             return valor
 
     def iniciar(self):
-        self.maxProf = 2
+        self.maxProf = 5
         self.run(-9999999999,+9999999999,self.maxProf)
         self.melhorMov.print()
 

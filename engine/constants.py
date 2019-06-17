@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-PIECE_NONE = 0xFF
+PECA_NENHUM = 0xFF
 PPW = 0
 PKW = 2
 PBW = 4

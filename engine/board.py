@@ -19,10 +19,10 @@ class Tabuleiro:
         index = ((bitboard * 0x78291ACF)& 0xffffffff) >> 26
         return engine.constants.lsb_64_table[index]
 
-    def getPecaBB(cor,bb):
+    def getPecaBB(self,cor,bb):
         i = cor
         peca = engine.constants.PECA_NENHUM
-        while i <= engine.constants.GB:
+        while i <= engine.constants.PGB:
             if self.board[i]&bb:
                 return i
             i = i + 2
@@ -113,8 +113,8 @@ class Tabuleiro:
 
         if movimento.tipo == engine.constants.MCAP:
             self.removerPeca(movimento.peca,movimento.bbPara)
-            self.adicionarPeca(movimento.pecaCaptura,movimento.bbDePara)
-            self.adicionarPeca(movimento.peca,movimento.bbDe)
+            self.adicionarPeca(movimento.pecaCaptura,movimento.bbPara)
+            self.removerPeca(movimento.peca,movimento.bbDe)
 
         self.corMover = 1-self.corMover
         self.enPasant = movimento.enPasant
@@ -223,7 +223,7 @@ class Tabuleiro:
 
         return False
 
-    def genMovsCavalo(self, lista):
+    def genMovsCavalo(self, lista,capturas):
         if self.corMover == 0:
             peca = engine.constants.PKW
             bb = self.board[peca]
@@ -239,22 +239,39 @@ class Tabuleiro:
         while bb>0:
             pos = (bb & -bb) & 0xffffffffffffffff
             index = self.indice(pos)
-            bbTo = engine.constants.mCavalo[index] & ~bbTodas
-            while bbTo>0:
-                lsb = (bbTo & -bbTo)  & 0xffffffffffffffff
-                mov = engine.move.Movimento(self.corMover,
-                                            peca,
-                                            0,
-                                            engine.constants.MNORMAL,
-                                            pos,
-                                            lsb,
-                                            self.roque,
-                                            self.enPasant)
-                lista.append(mov)
-                bbTo = bbTo & (bbTo -1)
+            if not capturas:
+                bbTo = engine.constants.mCavalo[index] & ~bbTodas
+                while bbTo>0:
+                    lsb = (bbTo & -bbTo)  & 0xffffffffffffffff
+                    mov = engine.move.Movimento(self.corMover,
+                                                peca,
+                                                0,
+                                                engine.constants.MNORMAL,
+                                                pos,
+                                                lsb,
+                                                self.roque,
+                                                self.enPasant)
+                    lista.append(mov)
+                    bbTo = bbTo & (bbTo -1)
+            else:
+                bbTo = engine.constants.mCavalo[index] & bbInimigos
+                while bbTo>0:
+                    lsb = (bbTo & -bbTo)  & 0xffffffffffffffff
+                    pecaTo = self.getPecaBB(1-self.corMover,lsb)
+                    mov = engine.move.Movimento(self.corMover,
+                                                peca,
+                                                pecaTo,
+                                                engine.constants.MCAP,
+                                                pos,
+                                                lsb,
+                                                self.roque,
+                                                self.enPasant)
+                    lista.append(mov)
+                    bbTo = bbTo & (bbTo -1)
+
             bb = bb & (bb-1)
 
-    def genMovsTorre(self,peca,lista):
+    def genMovsTorre(self,peca,lista,capturas):
         bbb = 0
         if self.corMover == 0:
             bbb = self.board[peca]
@@ -262,71 +279,122 @@ class Tabuleiro:
             bbb = self.board[peca]
 
         bbTodas = self.board[engine.constants.PW] | self.board[engine.constants.PB]
+        bbInimigas = self.board[engine.constants.PB-self.corMover]
 
         while bbb>0:
             bb = (bbb & -bbb)  & 0xffffffffffffffff 
             if (bb != 0) and (bb & (engine.constants.R[1]) == 0):
                 bbTo = bb >> 8
                 while (bbTo&bbTodas==0):
-                    mov = engine.move.Movimento(self.corMover,
-                                                peca,
-                                                0,
-                                                engine.constants.MNORMAL,
-                                                bb,
-                                                bbTo,
-                                                self.roque,
-                                                self.enPasant)
-                    lista.append(mov)
+                    if not capturas:
+                        mov = engine.move.Movimento(self.corMover,
+                                                    peca,
+                                                    0,
+                                                    engine.constants.MNORMAL,
+                                                    bb,
+                                                    bbTo,
+                                                    self.roque,
+                                                    self.enPasant)
+                        lista.append(mov)
                     if (bbTo & engine.constants.R[1]) != 0:
                         break
                     bbTo = bbTo >> 8
-            if (bb != 0) and (bb & (engine.constants.R[8]) == 0):
-                bbTo = bb << 8
-                while (bbTo&bbTodas==0):
+                if capturas and (bbTo &bbInimigas):
+                    pecaInimiga = self.getPecaBB(1-self.corMover,bbTo)
                     mov = engine.move.Movimento(self.corMover,
                                                 peca,
-                                                0,
-                                                engine.constants.MNORMAL,
+                                                pecaInimiga,
+                                                engine.constants.MCAP,
                                                 bb,
                                                 bbTo,
                                                 self.roque,
-                                                self.enPasant)
+                                                self.enPasant)                                                
                     lista.append(mov)
+            if (bb != 0) and (bb & (engine.constants.R[8]) == 0):
+                bbTo = bb << 8
+                while (bbTo&bbTodas==0):
+                    if not capturas:
+                        mov = engine.move.Movimento(self.corMover,
+                                                    peca,
+                                                    0,
+                                                    engine.constants.MNORMAL,
+                                                    bb,
+                                                    bbTo,
+                                                    self.roque,
+                                                    self.enPasant)
+                        lista.append(mov)
                     if (bbTo & engine.constants.R[8]) != 0:
                         break
                     bbTo = bbTo << 8
+                if capturas and (bbTo &bbInimigas):
+                    pecaInimiga = self.getPecaBB(1-self.corMover,bbTo)
+                    mov = engine.move.Movimento(self.corMover,
+                                                peca,
+                                                pecaInimiga,
+                                                engine.constants.MCAP,
+                                                bb,
+                                                bbTo,
+                                                self.roque,
+                                                self.enPasant)                                                
+                    lista.append(mov)
 
             if (bb != 0) and (bb & (engine.constants.C[1]) == 0):
                 bbTo = bb >> 1
                 while (bbTo&bbTodas==0):
-                    mov = engine.move.Movimento(self.corMover,
-                                                peca,
-                                                0,
-                                                engine.constants.MNORMAL,
-                                                bb,
-                                                bbTo,
-                                                self.roque,
-                                                self.enPasant)
-                    lista.append(mov)
+                    if not capturas:
+                        mov = engine.move.Movimento(self.corMover,
+                                                    peca,
+                                                    0,
+                                                    engine.constants.MNORMAL,
+                                                    bb,
+                                                    bbTo,
+                                                    self.roque,
+                                                    self.enPasant)
+                        lista.append(mov)
                     if (bbTo & engine.constants.C[1]) != 0:
                         break
                     bbTo = bbTo >> 1
+                if capturas and (bbTo &bbInimigas):
+                    pecaInimiga = self.getPecaBB(1-self.corMover,bbTo)
+                    mov = engine.move.Movimento(self.corMover,
+                                                peca,
+                                                pecaInimiga,
+                                                engine.constants.MCAP,
+                                                bb,
+                                                bbTo,
+                                                self.roque,
+                                                self.enPasant)                                                
+                    lista.append(mov)
 
             if (bb != 0) and (bb & (engine.constants.C[8]) == 0):
                 bbTo = bb << 1
                 while (bbTo&bbTodas==0):
-                    mov = engine.move.Movimento(self.corMover,
-                                                peca,
-                                                0,
-                                                engine.constants.MNORMAL,
-                                                bb,
-                                                bbTo,
-                                                self.roque,
-                                                self.enPasant)
-                    lista.append(mov)
+                    if not capturas:
+                        mov = engine.move.Movimento(self.corMover,
+                                                    peca,
+                                                    0,
+                                                    engine.constants.MNORMAL,
+                                                    bb,
+                                                    bbTo,
+                                                    self.roque,
+                                                    self.enPasant)
+                        lista.append(mov)
                     if (bbTo & engine.constants.C[8]) != 0:
                         break
                     bbTo = bbTo << 1
+                if capturas and (bbTo &bbInimigas):
+                    pecaInimiga = self.getPecaBB(1-self.corMover,bbTo)
+                    mov = engine.move.Movimento(self.corMover,
+                                                peca,
+                                                pecaInimiga,
+                                                engine.constants.MCAP,
+                                                bb,
+                                                bbTo,
+                                                self.roque,
+                                                self.enPasant)                                                
+                    lista.append(mov)
+
+
             bbb = (bbb & (bbb-1))
 
 
@@ -345,15 +413,16 @@ class Tabuleiro:
             if (bb != 0) and (bb & (engine.constants.R[1]|engine.constants.C[1]) == 0):
                 bbTo = bb >> 9
                 while (bbTo&bbTodas==0):
-                    mov = engine.move.Movimento(self.corMover,
-                                                peca,
-                                                0,
-                                                engine.constants.MNORMAL,
-                                                bb,
-                                                bbTo,
-                                                self.roque,
-                                                self.enPasant)                                                
-                    lista.append(mov)
+                    if not capturas:
+                        mov = engine.move.Movimento(self.corMover,
+                                                    peca,
+                                                    0,
+                                                    engine.constants.MNORMAL,
+                                                    bb,
+                                                    bbTo,
+                                                    self.roque,
+                                                    self.enPasant)                                                
+                        lista.append(mov)
                    
                     if (bbTo & (engine.constants.R[1]|engine.constants.C[1])) != 0:
                         break
@@ -374,15 +443,16 @@ class Tabuleiro:
             if (bb != 0) and (bb & (engine.constants.R[1]|engine.constants.C[8]) == 0):
                 bbTo = bb >> 7
                 while (bbTo&bbTodas==0):
-                    mov = engine.move.Movimento(self.corMover,
-                                                peca,
-                                                0,
-                                                engine.constants.MNORMAL,
-                                                bb,
-                                                bbTo,
-                                                self.roque,
-                                                self.enPasant)
-                    lista.append(mov)
+                    if not capturas:
+                        mov = engine.move.Movimento(self.corMover,
+                                                    peca,
+                                                    0,
+                                                    engine.constants.MNORMAL,
+                                                    bb,
+                                                    bbTo,
+                                                    self.roque,
+                                                    self.enPasant)
+                        lista.append(mov)
                     if (bbTo & (engine.constants.R[1]|engine.constants.C[8]) != 0):
                         break
                     bbTo = bbTo >> 7
@@ -401,15 +471,16 @@ class Tabuleiro:
             if (bb != 0) and (bb & (engine.constants.R[8]|engine.constants.C[1]) == 0):
                 bbTo = bb << 7
                 while (bbTo&bbTodas==0):
-                    mov = engine.move.Movimento(self.corMover,
-                                                peca,
-                                                0,
-                                                engine.constants.MNORMAL,
-                                                bb,
-                                                bbTo,
-                                                self.roque,
-                                                self.enPasant)
-                    lista.append(mov)
+                    if not capturas:
+                        mov = engine.move.Movimento(self.corMover,
+                                                    peca,
+                                                    0,
+                                                    engine.constants.MNORMAL,
+                                                    bb,
+                                                    bbTo,
+                                                    self.roque,
+                                                    self.enPasant)
+                        lista.append(mov)
                     if (bbTo & (engine.constants.R[8]|engine.constants.C[1]) != 0):
                         break
                     bbTo = bbTo << 7
@@ -428,15 +499,16 @@ class Tabuleiro:
             if (bb != 0) and (bb & (engine.constants.R[8]|engine.constants.C[8]) == 0):
                 bbTo = bb << 9
                 while (bbTo&bbTodas==0):
-                    mov = engine.move.Movimento(self.corMover,
-                                                peca,
-                                                0,
-                                                engine.constants.MNORMAL,
-                                                bb,
-                                                bbTo,
-                                                self.roque,
-                                                self.enPasant)
-                    lista.append(mov)
+                    if not capturas:
+                        mov = engine.move.Movimento(self.corMover,
+                                                    peca,
+                                                    0,
+                                                    engine.constants.MNORMAL,
+                                                    bb,
+                                                    bbTo,
+                                                    self.roque,
+                                                    self.enPasant)
+                        lista.append(mov)
                     if (bbTo & (engine.constants.R[8]|engine.constants.C[8]) != 0):
                         break
                     bbTo = bbTo << 9
@@ -453,75 +525,118 @@ class Tabuleiro:
                     lista.append(mov)
             bbb = (bbb & (bbb-1))
 
-    def genMovsPeao(self,lista):
+    def genMovsPeao(self,lista,capturas):
         if self.corMover == engine.constants.WHITE:
             peca = engine.constants.PPW
             bb = self.board[peca]
             bbAmigos = self.board[engine.constants.PW]
             bbInimigos = self.board[engine.constants.PB]
             bbTodas = bbAmigos | bbInimigos
-            normais = (bb>>8) & ~ bbTodas
-            duplos = ((normais & engine.constants.R[6]) >> 8) & ~bbTodas
 
-            while duplos > 0:
-                lsb = (duplos & -duplos)  & 0xffffffffffffffff
-                mov = engine.move.Movimento(engine.constants.WHITE,
-                                            peca,
-                                            0,
-                                            engine.constants.MDUPLO,
-                                            lsb<<16,
-                                            lsb,
-                                            self.roque,
-                                            self.enPasant)
-                lista.append(mov)
-                duplos = duplos & (duplos -1)
+            if not capturas:
+                normais = (bb>>8) & ~ bbTodas
+                duplos = ((normais & engine.constants.R[6]) >> 8) & ~bbTodas
 
-            while normais > 0:
-                lsb = (normais & -normais) & 0xffffffffffffffff
-                mov = engine.move.Movimento(engine.constants.WHITE,
-                                            peca,
-                                            0,
-                                            engine.constants.MNORMAL,
-                                            lsb<<8,
-                                            lsb,
-                                            self.roque,
-                                            self.enPasant)
-                lista.append(mov)
-                normais = normais & (normais -1)
+                while duplos > 0:
+                    lsb = (duplos & -duplos)  & 0xffffffffffffffff
+                    mov = engine.move.Movimento(engine.constants.WHITE,
+                                                peca,
+                                                0,
+                                                engine.constants.MDUPLO,
+                                                lsb<<16,
+                                                lsb,
+                                                self.roque,
+                                                self.enPasant)
+                    lista.append(mov)
+                    duplos = duplos & (duplos -1)
+
+                while normais > 0:
+                    lsb = (normais & -normais) & 0xffffffffffffffff
+                    mov = engine.move.Movimento(engine.constants.WHITE,
+                                                peca,
+                                                0,
+                                                engine.constants.MNORMAL,
+                                                lsb<<8,
+                                                lsb,
+                                                self.roque,
+                                                self.enPasant)
+                    lista.append(mov)
+                    normais = normais & (normais -1)
+            else:
+                lsb = bb
+                while bb != 0:
+                    lsb =(bb & -bb) & 0xffffffffffffffff
+                    casa = self.indice(lsb)
+                    bbToTodos = engine.constants.aPeao[0][casa] & bbInimigos
+                    while bbToTodos != 0:
+                        bbTo = (bbToTodos & -bbToTodos) & 0xffffffffffffffff
+                        pecaCap = self.getPecaBB(1,bbTo)
+                        mov = engine.move.Movimento(engine.constants.WHITE,
+                                                    peca,
+                                                    0,
+                                                    engine.constants.MCAP,
+                                                    lsb,
+                                                    bbTo,
+                                                    self.roque,
+                                                    self.enPasant)
+                        lista.append(mov)
+                        bbToTodos = bbToTodos & (bbToTodos -1)
+                    bb = bb & (bb-1)
         else:
             peca = engine.constants.PPB
             bb = self.board[peca]
             bbAmigos = self.board[engine.constants.PB]
             bbInimigos = self.board[engine.constants.PW]
             bbTodas = bbAmigos | bbInimigos
-            normais = (bb<<8) & ~ bbTodas
-            duplos = ((normais & engine.constants.R[3]) << 8) & ~bbTodas
+            if not capturas:
+                normais = (bb<<8) & ~ bbTodas
+                duplos = ((normais & engine.constants.R[3]) << 8) & ~bbTodas
 
-            while duplos > 0:
-                lsb = (duplos & -duplos)  & 0xffffffffffffffff
-                mov = engine.move.Movimento(self.corMover,
-                                            peca,
-                                            0,
-                                            engine.constants.MDUPLO,
-                                            lsb>>16,
-                                            lsb,
-                                            self.roque,
-                                            self.enPasant)
-                lista.append(mov)
-                duplos = duplos & (duplos -1)
+                while duplos > 0:
+                    lsb = (duplos & -duplos)  & 0xffffffffffffffff
+                    mov = engine.move.Movimento(self.corMover,
+                                                peca,
+                                                0,
+                                                engine.constants.MDUPLO,
+                                                lsb>>16,
+                                                lsb,
+                                                self.roque,
+                                                self.enPasant)
+                    lista.append(mov)
+                    duplos = duplos & (duplos -1)
 
-            while normais > 0:
-                lsb = (normais & -normais) & 0xffffffffffffffff
-                mov = engine.move.Movimento(self.corMover,
-                                            peca,
-                                            0,
-                                            engine.constants.MNORMAL,
-                                            lsb>>8,
-                                            lsb,
-                                            self.roque,
-                                            self.enPasant)
-                lista.append(mov)
-                normais = normais & (normais -1)
+                while normais > 0:
+                    lsb = (normais & -normais) & 0xffffffffffffffff
+                    mov = engine.move.Movimento(self.corMover,
+                                                peca,
+                                                0,
+                                                engine.constants.MNORMAL,
+                                                lsb>>8,
+                                                lsb,
+                                                self.roque,
+                                                self.enPasant)
+                    lista.append(mov)
+                    normais = normais & (normais -1)
+            else:
+                lsb = bb
+                while bb != 0:
+                    lsb =(bb & -bb) & 0xffffffffffffffff
+                    casa = self.indice(lsb)
+                    bbToTodos = engine.constants.aPeao[1][casa] & bbInimigos
+                    while bbToTodos != 0:
+                        bbTo = (bbToTodos & -bbToTodos) & 0xffffffffffffffff
+                        pecaCap = self.getPecaBB(0,bbTo)
+                        mov = engine.move.Movimento(engine.constants.BLACK,
+                                                    peca,
+                                                    pecaCap,
+                                                    engine.constants.MCAP,
+                                                    lsb,
+                                                    bbTo,
+                                                    self.roque,
+                                                    self.enPasant)
+                        lista.append(mov)
+                        bbToTodos = bbToTodos & (bbToTodos -1)
+                    bb = bb & (bb-1)
 
     def genMovsRei(self,lista,capturas):
         peca = self.corMover + engine.constants.PGW
@@ -604,11 +719,19 @@ class Tabuleiro:
                             lista.append(mov)            
     def genMovimentos(self):
         self.listaMovs = []
-        self.genMovsPeao(self.listaMovs)
-        self.genMovsCavalo(self.listaMovs)
+        self.genMovsPeao(self.listaMovs,True)
+        self.genMovsCavalo(self.listaMovs,True)
+        self.genMovsBispo(engine.constants.PBW+self.corMover, self.listaMovs,True)
+        self.genMovsTorre(engine.constants.PRW+self.corMover, self.listaMovs, True)
+        self.genMovsBispo(engine.constants.PQW+self.corMover, self.listaMovs,True)
+        self.genMovsTorre(engine.constants.PQW+self.corMover, self.listaMovs,True)
+        self.genMovsRei(self.listaMovs,True)
+
+        self.genMovsPeao(self.listaMovs,False)
+        self.genMovsCavalo(self.listaMovs,False)
         self.genMovsBispo(engine.constants.PBW+self.corMover, self.listaMovs,False)
-        self.genMovsTorre(engine.constants.PRW+self.corMover, self.listaMovs)
+        self.genMovsTorre(engine.constants.PRW+self.corMover, self.listaMovs, False)
         self.genMovsBispo(engine.constants.PQW+self.corMover, self.listaMovs,False)
-        self.genMovsTorre(engine.constants.PQW+self.corMover, self.listaMovs)
+        self.genMovsTorre(engine.constants.PQW+self.corMover, self.listaMovs, False)
         self.genMovsRei(self.listaMovs,False)
         return self.listaMovs
