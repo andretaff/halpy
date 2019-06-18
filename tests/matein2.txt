@@ -1,0 +1,11 @@
+3q2r1/4n2k/p1p1rBpp/PpPpPp2/1P3P1Q/2P3R1/7P/1R5K w - - 1 0
+Qh6+ Kxh6 2. Rh3# 
+# 2
+rn2kb1r/1pQbpppp/1p6/qp1N4/6n1/8/PPP3PP/2KR2NR w - - 1 0
+Qc8+ Bxc8 2. Nc7#
+# 3
+r2qk2r/pb4pp/1n2Pb2/2B2Q2/p1p5/2P5/2B2PPP/RN2R1K1 w - - 1 0
+Qg6+ hxg6 2. Bxg6# 
+# 4
+6k1/pp4p1/2p5/2bp4/8/P5Pb/1P3rrP/2BRRN1K b - - 0 1
+Rg1+ 2. Kxg1 Rxf1# 
