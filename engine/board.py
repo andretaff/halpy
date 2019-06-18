@@ -120,6 +120,31 @@ class Tabuleiro:
             self.adicionarPeca(movimento.pecaCaptura,movimento.bbPara)
             self.adicionarPeca(movimento.peca,movimento.bbDe)
 
+        if movimento.tipo == engine.constants.MROQUEPEQ:
+            if self.corMover == 1:
+                self.removerPeca(engine.constants.PGW,engine.constants.index[63])
+                self.removerPeca(engine.constants.PRW,engine.constants.index[62])
+                self.adicionarPeca(engine.constants.PGW,engine.constants.index[60])
+                self.adicionarPeca(engine.constants.PRW,engine.constants.index[63])
+            else:
+                self.removerPeca(engine.constants.PGB,engine.constants.index[7])
+                self.removerPeca(engine.constants.PRB,engine.constants.index[6])
+                self.adicionarPeca(engine.constants.PGB,engine.constants.index[4])
+                self.adicionarPeca(engine.constants.PRB,engine.constants.index[7])
+
+        if movimento.tipo == engine.constants.MROQUEGRD:
+            if self.corMover == 1:
+                self.removerPeca(engine.constants.PGW,engine.constants.index[56])
+                self.removerPeca(engine.constants.PRW,engine.constants.index[57])
+                self.adicionarPeca(engine.constants.PGW,engine.constants.index[60])
+                self.adicionarPeca(engine.constants.PRW,engine.constants.index[56])
+            else:
+                self.removerPeca(engine.constants.PGB,engine.constants.index[0])
+                self.removerPeca(engine.constants.PRB,engine.constants.index[1])
+                self.adicionarPeca(engine.constants.PGB,engine.constants.index[4])
+                self.adicionarPeca(engine.constants.PRB,engine.constants.index[0])
+
+
         self.corMover = 1-self.corMover
         self.enPasant = movimento.enPasant
         self.roque = movimento.roque
@@ -712,7 +737,7 @@ class Tabuleiro:
                                                         self.roque,
                                                         self.enPasant)
                             lista.append(mov)
-                if self.roque & (engine.constants.ROQUE_GW) != 0:
+                if self.roque & (engine.constants.ROQUE_GB) != 0:
                     if (bbTodas & (engine.constants.index[1]|engine.constants.index[2]|engine.constants.index[3]))==0:
                         if (not  self.casaAtacada(engine.constants.index[1],1)) and (not  self.casaAtacada(engine.constants.index[2],1)) and (not  self.casaAtacada(engine.constants.index[3],1)) and (not  self.casaAtacada(engine.constants.index[4],0)) and (not  self.casaAtacada(engine.constants.index[0],0)):
                             mov = engine.move.Movimento(self.corMover,

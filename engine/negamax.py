@@ -18,10 +18,12 @@ class Negamax():
             tabValue = 0
             listaMovs = self.tabuleiro.genMovimentos()
             for mov in listaMovs:
+                #if mov.tipo >= 3:
+                #    self.tabuleiro.print()
                 #if profundidade == self.maxProf:
                 #    print('-------------------------------------------------------')
                 #    self.tabuleiro.print()
-                #    if mov.peca == 8 and mov.tipo==0:
+                #    if mov.peca == 2 and mov.tipo==0:
                 #        mov.print()
                 #        self.print = True
                 #    print('-------------------------------------------------------') #19

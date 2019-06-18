@@ -12,7 +12,9 @@ class Test_mateIn2(unittest.TestCase):
         fenReader = interface.fenString.fenString()
         nTeste = 0
         for linha in linhas:
-            if len(linha)==0 or linha[0]=='#':
+            if len(linha)>10 and linha[0:10]== '##########':
+                break
+            if len(linha)<3 or linha[0]=='#':
                 continue
             if fen == '':
                 fen = linha
@@ -26,7 +28,7 @@ class Test_mateIn2(unittest.TestCase):
                 #tabuleiro.print()
                 mov = negamax.iniciar()
                 #mov.print()
-                self.assertEqual(engine.constants.pecas[mov.peca],peca)
+                self.assertEqual((engine.constants.pecas[mov.peca]).upper(),(peca).upper())
                 self.assertEqual(mov.bbPara,bb)
                 fen = ''
                 nTeste = nTeste +1
