@@ -42,7 +42,7 @@ class fenString:
         return self.tabuleiro
     
     def tabuleiroPadrao(self):
-        #return self.lerFenString('rnbqkbnr/8/8/8/8/8/8/R2QK2R w KQkq')
-        return self.lerFenString('3r1k2/4npp1/1ppr3p/p6P/P2PPPP1/1NR5/5K2/2R5 w')
+        return self.lerFenString('r2qk2r/pb4pp/1n2Pb2/2B2Q2/p1p5/2P5/2B2PPP/RN2R1K1 w - - 1 0')
+        #return self.lerFenString('3r1k2/4npp1/1ppr3p/p6P/P2PPPP1/1NR5/5K2/2R5 w')
         #return self.lerFenString('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq')
 

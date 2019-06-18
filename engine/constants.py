@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 
+VITORIA = 99999999
+DERROTA = -VITORIA
+EMPATE = -100
+
 PECA_NENHUM = 0xFF
 PPW = 0
 PKW = 2

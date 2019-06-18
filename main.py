@@ -10,4 +10,6 @@ tabuleiro.print()
 
 negamax = negamax.Negamax(tabuleiro)
 
-negamax.iniciar()
+mov = negamax.iniciar()
+
+mov.print()

@@ -118,7 +118,7 @@ class Tabuleiro:
         if movimento.tipo == engine.constants.MCAP:
             self.removerPeca(movimento.peca,movimento.bbPara)
             self.adicionarPeca(movimento.pecaCaptura,movimento.bbPara)
-            self.removerPeca(movimento.peca,movimento.bbDe)
+            self.adicionarPeca(movimento.peca,movimento.bbDe)
 
         self.corMover = 1-self.corMover
         self.enPasant = movimento.enPasant
@@ -142,9 +142,12 @@ class Tabuleiro:
                 linha = ''
         print (linha)               
     
+    def emCheque(self):
+        return self.casaAtacada(self.board[engine.constants.PGW+self.corMover],self.corMover)
+
     def casaAtacada(self,bb,cor):
         casa = self.indice(bb)
-        if engine.constants.aPeao[1-cor][casa] & self.board[engine.constants.PPB-cor] != 0:
+        if engine.constants.aPeao[cor][casa] & self.board[engine.constants.PPB-cor] != 0:
             return True
         if engine.constants.mCavalo[casa] & self.board[engine.constants.PKB-cor] != 0:
             return True
@@ -176,7 +179,7 @@ class Tabuleiro:
             while (not bbTo&bbAmigas!=0) and (not bbTo & bbInimigas !=0):
                 if bbTo & (engine.constants.R[8] | engine.constants.C[1])!=0:
                     break
-                bbTo = bbTo >> 7
+                bbTo = bbTo << 7
             if (bbTo & (self.board[engine.constants.PBB-cor] | self.board[engine.constants.PQB-cor] ))!=0:
                 return True
 
@@ -185,7 +188,7 @@ class Tabuleiro:
             while (not bbTo&bbAmigas!=0) and (not bbTo & bbInimigas !=0):
                 if bbTo & (engine.constants.R[8] | engine.constants.C[8])!=0:
                     break
-                bbTo = bbTo >> 9
+                bbTo = bbTo << 9
             if (bbTo & (self.board[engine.constants.PBB-cor] | self.board[engine.constants.PQB-cor] ))!=0:
                 return True
 
@@ -219,7 +222,7 @@ class Tabuleiro:
         if (bb & (engine.constants.C[8])==0):
             bbTo = bb << 1
             while (not bbTo&bbAmigas!=0) and (not bbTo & bbInimigas !=0):
-                if bbTo & (engine.constants.R[8])!=0:
+                if bbTo & (engine.constants.C[8])!=0:
                     break
                 bbTo = bbTo <<1
             if (bbTo & (self.board[engine.constants.PRB-cor] | self.board[engine.constants.PQB-cor] ))!=0:
