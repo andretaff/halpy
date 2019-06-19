@@ -15,6 +15,8 @@ class Test_mateIn2(unittest.TestCase):
             if len(linha)>10 and linha[0:10]== '##########':
                 break
             if len(linha)<3 or linha[0]=='#':
+                if len(linha)>3:
+                    print (linha[1:])
                 continue
             if fen == '':
                 fen = linha
@@ -30,9 +32,12 @@ class Test_mateIn2(unittest.TestCase):
                 #mov.print()
                 self.assertEqual((engine.constants.pecas[mov.peca]).upper(),(peca).upper())
                 self.assertEqual(mov.bbPara,bb)
-                fen = ''
                 nTeste = nTeste +1
                 print ("Teste "+str(nTeste)+ ' ok ')
+                print (fen)
+                mov.print()
+                print ('------------------------------------------------')
+                fen = ''
                 del negamax
                 del tabuleiro
                 del mov

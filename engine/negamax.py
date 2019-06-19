@@ -18,19 +18,20 @@ class Negamax():
             tabValue = 0
             listaMovs = self.tabuleiro.genMovimentos()
             for mov in listaMovs:
-                #if mov.tipo >= 3:
-                #    self.tabuleiro.print()
-                #if profundidade == self.maxProf:
-                #    print('-------------------------------------------------------')
-                #    self.tabuleiro.print()
-                #    if mov.peca == 2 and mov.tipo==0:
-                #        mov.print()
-                #        self.print = True
-                #    print('-------------------------------------------------------') #19
+#                if mov.tipo >= 3:
+#                    self.tabuleiro.print()
+#                if profundidade == self.maxProf:
+#                    print('-------------------------------------------------------')
+#                    self.tabuleiro.print()
+#                    mov.print()
+#                    #if mov.peca == 8 and mov.bbPara == engine.constants.index[22]:
+##                    self.print = True
+#                    print('-------------------------------------------------------') #19
                 tabValue = self.tabuleiro.vBranco + self.tabuleiro.vPreto
-                self.tabuleiro.realizarMovimento(mov)
                 if self.print:
                     mov.print()
+                self.tabuleiro.realizarMovimento(mov)
+                if self.print:
                     self.tabuleiro.print()
                 if not self.tabuleiro.invalido():
                     movs = movs + 1
@@ -53,7 +54,7 @@ class Negamax():
                 return alfa
             else:
                 if self.tabuleiro.emCheque():
-                    return engine.constants.DERROTA
+                    return engine.constants.DERROTA#-(self.maxProf -profundidade)
                 else:
                     return engine.constants.EMPATE
 

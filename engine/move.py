@@ -36,12 +36,18 @@ class Movimento:
                 linha = linha + ' PRETO '
             print(linha)
             return
+        elif self.tipo> engine.constants.MPROMOCAP:
+            linha = ' PROMOÇÃO PARA '+engine.constants.pecas[self.tipo- engine.constants.MPROMOCAP]+ ' CAPTURANDO '
+        elif self.tipo> engine.constants.MPROMO:
+            linha = ' PROMOÇÃO PARA '+engine.constants.pecas[self.tipo- engine.constants.MPROMO]+ ' '
+
+
         linha = linha + engine.constants.pecas[self.peca]
         if self.lado == 0:
             linha = linha + ' BRANCO DE '
         else:
             linha = linha + ' PRETO DE '
         linha = linha + engine.bitboard.bbHumano(self.bbDe)+ ' PARA '+engine.bitboard.bbHumano(self.bbPara)
-        if self.tipo == engine.constants.MCAP:
+        if (self.tipo== engine.constants.MCAP) or (self.tipo> engine.constants.MPROMOCAP):
             linha = linha + ' CAPT '+engine.constants.pecas[self.pecaCaptura]
         print (linha)

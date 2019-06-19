@@ -5,7 +5,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{66743fc2-5e07-44b6-84ba-10f225b1bdc0}</ProjectGuid>
     <ProjectHome />
-    <StartupFile>tests\mateIn2.py</StartupFile>
+    <StartupFile>main.py</StartupFile>
     <SearchPath />
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>

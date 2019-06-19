@@ -59,6 +59,7 @@ class Tabuleiro:
         if movimento.tipo == engine.constants.MNORMAL:
             self.removerPeca(movimento.peca,movimento.bbDe)
             self.adicionarPeca(movimento.peca,movimento.bbPara)
+
         if movimento.tipo == engine.constants.MDUPLO:
             self.removerPeca(movimento.peca,movimento.bbDe)
             self.adicionarPeca(movimento.peca,movimento.bbPara)
@@ -96,7 +97,18 @@ class Tabuleiro:
                 self.adicionarPeca(engine.constants.PGB,engine.constants.index[0])
                 self.adicionarPeca(engine.constants.PRB,engine.constants.index[1])
 
-                
+        if movimento.tipo > engine.constants.MPROMOCAP:
+            pecaPromo = movimento.tipo - engine.constants.MPROMOCAP
+            self.removerPeca(movimento.peca,movimento.bbDe)
+            self.removerPeca(movimento.pecaCaptura, movimento.bbPara)
+            self.adicionarPeca(pecaPromo,movimento.bbPara)
+        elif movimento.tipo> engine.constants.MPROMO:
+            pecaPromo = movimento.tipo - engine.constants.MPROMO
+            self.removerPeca(movimento.peca,movimento.bbDe)
+            self.adicionarPeca(pecaPromo,movimento.bbPara)
+
+
+                          
 
 
 
@@ -143,6 +155,17 @@ class Tabuleiro:
                 self.removerPeca(engine.constants.PRB,engine.constants.index[1])
                 self.adicionarPeca(engine.constants.PGB,engine.constants.index[4])
                 self.adicionarPeca(engine.constants.PRB,engine.constants.index[0])
+
+        if movimento.tipo > engine.constants.MPROMOCAP:
+            pecaPromo = movimento.tipo - engine.constants.MPROMOCAP
+            self.removerPeca(pecaPromo,movimento.bbPara)
+            self.adicionarPeca(movimento.peca,movimento.bbDe)
+            self.adicionarPeca(movimento.pecaCaptura, movimento.bbPara)
+
+        elif movimento.tipo> engine.constants.MPROMO:
+            pecaPromo = movimento.tipo - engine.constants.MPROMO
+            self.adicionarPeca(movimento.peca,movimento.bbDe)
+            self.removerPeca(pecaPromo,movimento.bbPara)
 
 
         self.corMover = 1-self.corMover
@@ -567,7 +590,23 @@ class Tabuleiro:
 
             if not capturas:
                 normais = (bb>>8) & ~ bbTodas
+                promos = normais & engine.constants.R[1]
+                normais = normais & ~promos
                 duplos = ((normais & engine.constants.R[6]) >> 8) & ~bbTodas
+
+                while promos>0:
+                    lsb = (promos & -promos)  & 0xffffffffffffffff
+                    for pecapromo in [engine.constants.PQW, engine.constants.PKW, engine.constants.PRW, engine.constants.PBW]:
+                        mov = engine.move.Movimento(engine.constants.WHITE,
+                                                    peca,
+                                                    0,
+                                                    engine.constants.MPROMO+pecapromo,
+                                                    lsb<<8,
+                                                    lsb,
+                                                    self.roque,
+                                                    self.enPasant)
+                        lista.append(mov)
+                    promos = promos & (promos -1)
 
                 while duplos > 0:
                     lsb = (duplos & -duplos)  & 0xffffffffffffffff
@@ -600,12 +639,30 @@ class Tabuleiro:
                     lsb =(bb & -bb) & 0xffffffffffffffff
                     casa = self.indice(lsb)
                     bbToTodos = engine.constants.aPeao[0][casa] & bbInimigos
+                    bbPromos = bbToTodos & engine.constants.R[1]
+                    bbToTodos = bbToTodos & ~bbPromos
+
+                    while bbPromos!=0:
+                        bbTo = (bbPromos & -bbPromos) & 0xffffffffffffffff
+                        pecaCap = self.getPecaBB(1,bbTo)
+                        for pecapromo in [engine.constants.PQW, engine.constants.PKW, engine.constants.PRW, engine.constants.PBW]:
+                            mov = engine.move.Movimento(engine.constants.WHITE,
+                                                        peca,
+                                                        pecaCap,
+                                                        engine.constants.MPROMOCAP+pecapromo,
+                                                        lsb,
+                                                        bbTo,
+                                                        self.roque,
+                                                        self.enPasant)
+                            lista.append(mov)
+                        bbPromos = bbPromos &(bbPromos-1)
+
                     while bbToTodos != 0:
                         bbTo = (bbToTodos & -bbToTodos) & 0xffffffffffffffff
                         pecaCap = self.getPecaBB(1,bbTo)
                         mov = engine.move.Movimento(engine.constants.WHITE,
                                                     peca,
-                                                    0,
+                                                    pecaCap,
                                                     engine.constants.MCAP,
                                                     lsb,
                                                     bbTo,
@@ -622,7 +679,26 @@ class Tabuleiro:
             bbTodas = bbAmigos | bbInimigos
             if not capturas:
                 normais = (bb<<8) & ~ bbTodas
+
+                promos = normais & engine.constants.R[8]
+                normais = normais & ~promos
                 duplos = ((normais & engine.constants.R[3]) << 8) & ~bbTodas
+
+                while promos>0:
+                    lsb = (promos & -promos)  & 0xffffffffffffffff
+                    for pecapromo in [engine.constants.PQB, engine.constants.PKB, engine.constants.PRB, engine.constants.PBB]:
+                        mov = engine.move.Movimento(engine.constants.BLACK,
+                                                    peca,
+                                                    0,
+                                                    engine.constants.MPROMO+pecapromo,
+                                                    lsb>>8,
+                                                    lsb,
+                                                    self.roque,
+                                                    self.enPasant)
+                        lista.append(mov)
+                    promos = promos & (promos -1)
+
+
 
                 while duplos > 0:
                     lsb = (duplos & -duplos)  & 0xffffffffffffffff
@@ -655,6 +731,24 @@ class Tabuleiro:
                     lsb =(bb & -bb) & 0xffffffffffffffff
                     casa = self.indice(lsb)
                     bbToTodos = engine.constants.aPeao[1][casa] & bbInimigos
+
+                    bbPromos = bbToTodos & engine.constants.R[8]
+                    bbToTodos = bbToTodos & ~bbPromos
+
+                    while bbPromos!=0:
+                        bbTo = (bbPromos & -bbPromos) & 0xffffffffffffffff
+                        pecaCap = self.getPecaBB(1,bbTo)
+                        for pecapromo in [engine.constants.PQB, engine.constants.PKB, engine.constants.PRB, engine.constants.PBB]:
+                            mov = engine.move.Movimento(engine.constants.BLACK,
+                                                        peca,
+                                                        pecaCap,
+                                                        engine.constants.MPROMOCAP+pecapromo,
+                                                        lsb,
+                                                        bbTo,
+                                                        self.roque,
+                                                        self.enPasant)
+                        bbPromos = bbPromos &(bbPromos-1)
+
                     while bbToTodos != 0:
                         bbTo = (bbToTodos & -bbToTodos) & 0xffffffffffffffff
                         pecaCap = self.getPecaBB(0,bbTo)
