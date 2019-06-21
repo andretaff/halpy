@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import engine.constants, engine.move
 import engine.bitboard
+import engine.zobrist
 
 class Tabuleiro:
     def __init__(self):
@@ -11,8 +12,15 @@ class Tabuleiro:
         self.roque = engine.constants.ROQUE_NENHUM
         self.enPasant = 0
         self.check = False
+        self.chave = 0
         for i in range(engine.constants.ALLBITBOARDS):
             self.board.append(engine.constants.POSITION_NONE)
+
+    def chave(self):
+        nchave  = chave
+        if self.corMover == 1:
+            nChave = nchave ^ zobrist.chaveBTm
+
 
     def invalido(self):
         return self.casaAtacada(self.board[engine.constants.PGB-self.corMover],1-self.corMover)
@@ -34,10 +42,13 @@ class Tabuleiro:
 
 
     def adicionarPecaHumana(self,peca, posicao):
-        self.adicionarPeca(peca,2**posicao)
+        self.adicionarPeca(peca,2**posicao,posicao)
         
-    def adicionarPeca(self,peca,bitboard):
+    def adicionarPeca(self,peca,bitboard,indice):
         self.board[peca] ^= bitboard
+
+        self.chave = self.chave ^ engine.zobrist.chaves[peca][indice]
+
         if peca%2==0:
             self.board[engine.constants.PW] ^= bitboard
             self.vBranco = self.vBranco + engine.constants.valores[peca]
@@ -46,8 +57,9 @@ class Tabuleiro:
             self.vPreto = self.vPreto + engine.constants.valores[peca]
 
 
-    def removerPeca(self,peca,bitboard):
+    def removerPeca(self,peca,bitboard,indice):
         self.board[peca] ^= bitboard
+        self.chave = self.chave ^ engine.zobrist.chaves[peca][indice]
         if peca%2==0:
             self.board[engine.constants.PW] ^= bitboard
             self.vBranco = self.vBranco - engine.constants.valores[peca]
@@ -57,55 +69,55 @@ class Tabuleiro:
 
     def realizarMovimento(self,movimento):
         if movimento.tipo == engine.constants.MNORMAL:
-            self.removerPeca(movimento.peca,movimento.bbDe)
-            self.adicionarPeca(movimento.peca,movimento.bbPara)
+            self.removerPeca(movimento.peca,movimento.bbDe,movimento.indiceDe)
+            self.adicionarPeca(movimento.peca,movimento.bbPara,movimento.indicePara)
 
         if movimento.tipo == engine.constants.MDUPLO:
-            self.removerPeca(movimento.peca,movimento.bbDe)
-            self.adicionarPeca(movimento.peca,movimento.bbPara)
+            self.removerPeca(movimento.peca,movimento.bbDe,movimento.indiceDe)
+            self.adicionarPeca(movimento.peca,movimento.bbPara,movimento.indicePara)
             if self.corMover == 0:
                 self.enPassant = movimento.bbPara >> 8
             else:
                 self.enPassant = movimento.bbPara << 8
 
         if movimento.tipo == engine.constants.MCAP:
-            self.removerPeca(movimento.peca,movimento.bbDe)
-            self.removerPeca(movimento.pecaCaptura, movimento.bbPara)
-            self.adicionarPeca(movimento.peca,movimento.bbPara)
+            self.removerPeca(movimento.peca,movimento.bbDe,movimento.indiceDe)
+            self.removerPeca(movimento.pecaCaptura, movimento.bbPara,movimento.indicePara)
+            self.adicionarPeca(movimento.peca,movimento.bbPara,movimento.indicePara)
 
         if movimento.tipo == engine.constants.MROQUEPEQ:
             if self.corMover == 0:
-                self.removerPeca(engine.constants.PGW,engine.constants.index[60])
-                self.removerPeca(engine.constants.PRW,engine.constants.index[63])
-                self.adicionarPeca(engine.constants.PGW,engine.constants.index[63])
-                self.adicionarPeca(engine.constants.PRW,engine.constants.index[62])
+                self.removerPeca(engine.constants.PGW,engine.constants.index[60],60)
+                self.removerPeca(engine.constants.PRW,engine.constants.index[63],63)
+                self.adicionarPeca(engine.constants.PGW,engine.constants.index[63],63)
+                self.adicionarPeca(engine.constants.PRW,engine.constants.index[62],62)
             else:
-                self.removerPeca(engine.constants.PGB,engine.constants.index[4])
-                self.removerPeca(engine.constants.PRB,engine.constants.index[7])
-                self.adicionarPeca(engine.constants.PGB,engine.constants.index[7])
-                self.adicionarPeca(engine.constants.PRB,engine.constants.index[6])
+                self.removerPeca(engine.constants.PGB,engine.constants.index[4],4)
+                self.removerPeca(engine.constants.PRB,engine.constants.index[7],7)
+                self.adicionarPeca(engine.constants.PGB,engine.constants.index[7],7)
+                self.adicionarPeca(engine.constants.PRB,engine.constants.index[6],6)
 
         if movimento.tipo == engine.constants.MROQUEGRD:
             if self.corMover == 0:
-                self.removerPeca(engine.constants.PGW,engine.constants.index[60])
-                self.removerPeca(engine.constants.PRW,engine.constants.index[56])
-                self.adicionarPeca(engine.constants.PGW,engine.constants.index[56])
-                self.adicionarPeca(engine.constants.PRW,engine.constants.index[57])
+                self.removerPeca(engine.constants.PGW,engine.constants.index[60],60)
+                self.removerPeca(engine.constants.PRW,engine.constants.index[56],56)
+                self.adicionarPeca(engine.constants.PGW,engine.constants.index[56],56)
+                self.adicionarPeca(engine.constants.PRW,engine.constants.index[57],57)
             else:
-                self.removerPeca(engine.constants.PGB,engine.constants.index[4])
-                self.removerPeca(engine.constants.PRB,engine.constants.index[0])
-                self.adicionarPeca(engine.constants.PGB,engine.constants.index[0])
-                self.adicionarPeca(engine.constants.PRB,engine.constants.index[1])
+                self.removerPeca(engine.constants.PGB,engine.constants.index[4],4)
+                self.removerPeca(engine.constants.PRB,engine.constants.index[0],0)
+                self.adicionarPeca(engine.constants.PGB,engine.constants.index[0],0)
+                self.adicionarPeca(engine.constants.PRB,engine.constants.index[1],1)
 
         if movimento.tipo > engine.constants.MPROMOCAP:
             pecaPromo = movimento.tipo - engine.constants.MPROMOCAP
-            self.removerPeca(movimento.peca,movimento.bbDe)
-            self.removerPeca(movimento.pecaCaptura, movimento.bbPara)
-            self.adicionarPeca(pecaPromo,movimento.bbPara)
+            self.removerPeca(movimento.peca,movimento.bbDe,movimento.indiceDe)
+            self.removerPeca(movimento.pecaCaptura, movimento.bbPara,movimento.indicePara)
+            self.adicionarPeca(pecaPromo,movimento.bbPara,movimento.indicePara)
         elif movimento.tipo> engine.constants.MPROMO:
             pecaPromo = movimento.tipo - engine.constants.MPROMO
-            self.removerPeca(movimento.peca,movimento.bbDe)
-            self.adicionarPeca(pecaPromo,movimento.bbPara)
+            self.removerPeca(movimento.peca,movimento.bbDe,movimento.indiceDe)
+            self.adicionarPeca(pecaPromo,movimento.bbPara,movimento.indicePara)
 
 
                           
@@ -121,51 +133,51 @@ class Tabuleiro:
 
     def desfazerMovimento(self,movimento):
         if movimento.tipo == engine.constants.MNORMAL:
-            self.removerPeca(movimento.peca,movimento.bbPara)
-            self.adicionarPeca(movimento.peca,movimento.bbDe)
+            self.removerPeca(movimento.peca,movimento.bbPara,movimento.indicePara)
+            self.adicionarPeca(movimento.peca,movimento.bbDe,movimento.indiceDe)
         if movimento.tipo == engine.constants.MDUPLO:
-            self.removerPeca(movimento.peca,movimento.bbPara)
-            self.adicionarPeca(movimento.peca,movimento.bbDe)
+            self.removerPeca(movimento.peca,movimento.bbPara,movimento.indicePara)
+            self.adicionarPeca(movimento.peca,movimento.bbDe,movimento.indiceDe)
 
         if movimento.tipo == engine.constants.MCAP:
-            self.removerPeca(movimento.peca,movimento.bbPara)
-            self.adicionarPeca(movimento.pecaCaptura,movimento.bbPara)
-            self.adicionarPeca(movimento.peca,movimento.bbDe)
+            self.removerPeca(movimento.peca,movimento.bbPara,movimento.indicePara)
+            self.adicionarPeca(movimento.pecaCaptura,movimento.bbPara,movimento.indicePara)
+            self.adicionarPeca(movimento.peca,movimento.bbDe,movimento.indiceDe)
 
         if movimento.tipo == engine.constants.MROQUEPEQ:
             if self.corMover == 1:
-                self.removerPeca(engine.constants.PGW,engine.constants.index[63])
-                self.removerPeca(engine.constants.PRW,engine.constants.index[62])
-                self.adicionarPeca(engine.constants.PGW,engine.constants.index[60])
-                self.adicionarPeca(engine.constants.PRW,engine.constants.index[63])
+                self.removerPeca(engine.constants.PGW,engine.constants.index[63],63)
+                self.removerPeca(engine.constants.PRW,engine.constants.index[62],62)
+                self.adicionarPeca(engine.constants.PGW,engine.constants.index[60],60)
+                self.adicionarPeca(engine.constants.PRW,engine.constants.index[63],63)
             else:
-                self.removerPeca(engine.constants.PGB,engine.constants.index[7])
-                self.removerPeca(engine.constants.PRB,engine.constants.index[6])
-                self.adicionarPeca(engine.constants.PGB,engine.constants.index[4])
-                self.adicionarPeca(engine.constants.PRB,engine.constants.index[7])
+                self.removerPeca(engine.constants.PGB,engine.constants.index[7],7)
+                self.removerPeca(engine.constants.PRB,engine.constants.index[6],6)
+                self.adicionarPeca(engine.constants.PGB,engine.constants.index[4],4)
+                self.adicionarPeca(engine.constants.PRB,engine.constants.index[7],7)
 
         if movimento.tipo == engine.constants.MROQUEGRD:
             if self.corMover == 1:
-                self.removerPeca(engine.constants.PGW,engine.constants.index[56])
-                self.removerPeca(engine.constants.PRW,engine.constants.index[57])
-                self.adicionarPeca(engine.constants.PGW,engine.constants.index[60])
-                self.adicionarPeca(engine.constants.PRW,engine.constants.index[56])
+                self.removerPeca(engine.constants.PGW,engine.constants.index[56],56)
+                self.removerPeca(engine.constants.PRW,engine.constants.index[57],57)
+                self.adicionarPeca(engine.constants.PGW,engine.constants.index[60],60)
+                self.adicionarPeca(engine.constants.PRW,engine.constants.index[56],56)
             else:
-                self.removerPeca(engine.constants.PGB,engine.constants.index[0])
-                self.removerPeca(engine.constants.PRB,engine.constants.index[1])
-                self.adicionarPeca(engine.constants.PGB,engine.constants.index[4])
-                self.adicionarPeca(engine.constants.PRB,engine.constants.index[0])
+                self.removerPeca(engine.constants.PGB,engine.constants.index[0],0)
+                self.removerPeca(engine.constants.PRB,engine.constants.index[1],1)
+                self.adicionarPeca(engine.constants.PGB,engine.constants.index[4],4)
+                self.adicionarPeca(engine.constants.PRB,engine.constants.index[0],0)
 
         if movimento.tipo > engine.constants.MPROMOCAP:
             pecaPromo = movimento.tipo - engine.constants.MPROMOCAP
-            self.removerPeca(pecaPromo,movimento.bbPara)
-            self.adicionarPeca(movimento.peca,movimento.bbDe)
-            self.adicionarPeca(movimento.pecaCaptura, movimento.bbPara)
+            self.removerPeca(pecaPromo,movimento.bbPara,movimento.indicePara)
+            self.adicionarPeca(movimento.peca,movimento.bbDe,movimento.indiceDe)
+            self.adicionarPeca(movimento.pecaCaptura, movimento.bbPara,movimento.indicePara)
 
         elif movimento.tipo> engine.constants.MPROMO:
             pecaPromo = movimento.tipo - engine.constants.MPROMO
-            self.adicionarPeca(movimento.peca,movimento.bbDe)
-            self.removerPeca(pecaPromo,movimento.bbPara)
+            self.adicionarPeca(movimento.peca,movimento.bbDe,movimento.indiceDe)
+            self.removerPeca(pecaPromo,movimento.bbPara,movimento.indicePara)
 
 
         self.corMover = 1-self.corMover
@@ -298,6 +310,7 @@ class Tabuleiro:
                 bbTo = engine.constants.mCavalo[index] & ~bbTodas
                 while bbTo>0:
                     lsb = (bbTo & -bbTo)  & 0xffffffffffffffff
+                    indexTo = self.indice(lsb)
                     mov = engine.move.Movimento(self.corMover,
                                                 peca,
                                                 0,
@@ -305,7 +318,9 @@ class Tabuleiro:
                                                 pos,
                                                 lsb,
                                                 self.roque,
-                                                self.enPasant)
+                                                self.enPasant,
+                                                index,
+                                                indexTo)
                     lista.append(mov)
                     bbTo = bbTo & (bbTo -1)
             else:
@@ -313,6 +328,7 @@ class Tabuleiro:
                 while bbTo>0:
                     lsb = (bbTo & -bbTo)  & 0xffffffffffffffff
                     pecaTo = self.getPecaBB(1-self.corMover,lsb)
+                    indexTo = self.indice(lsb)
                     mov = engine.move.Movimento(self.corMover,
                                                 peca,
                                                 pecaTo,
@@ -320,7 +336,9 @@ class Tabuleiro:
                                                 pos,
                                                 lsb,
                                                 self.roque,
-                                                self.enPasant)
+                                                self.enPasant,
+                                                index,
+                                                indexTo)
                     lista.append(mov)
                     bbTo = bbTo & (bbTo -1)
 
@@ -338,10 +356,13 @@ class Tabuleiro:
 
         while bbb>0:
             bb = (bbb & -bbb)  & 0xffffffffffffffff 
+            index = self.indice(bb)
+
             if (bb != 0) and (bb & (engine.constants.R[1]) == 0):
                 bbTo = bb >> 8
                 while (bbTo&bbTodas==0):
                     if not capturas:
+                        indexTo = self.indice(bbTo)
                         mov = engine.move.Movimento(self.corMover,
                                                     peca,
                                                     0,
@@ -349,13 +370,16 @@ class Tabuleiro:
                                                     bb,
                                                     bbTo,
                                                     self.roque,
-                                                    self.enPasant)
+                                                    self.enPasant,
+                                                    index,
+                                                    indexTo)
                         lista.append(mov)
                     if (bbTo & engine.constants.R[1]) != 0:
                         break
                     bbTo = bbTo >> 8
                 if capturas and (bbTo &bbInimigas):
                     pecaInimiga = self.getPecaBB(1-self.corMover,bbTo)
+                    indexTo = self.indice(bbTo)
                     mov = engine.move.Movimento(self.corMover,
                                                 peca,
                                                 pecaInimiga,
@@ -363,12 +387,15 @@ class Tabuleiro:
                                                 bb,
                                                 bbTo,
                                                 self.roque,
-                                                self.enPasant)                                                
+                                                self.enPasant,
+                                                index,
+                                                indexTo)  
                     lista.append(mov)
             if (bb != 0) and (bb & (engine.constants.R[8]) == 0):
                 bbTo = bb << 8
                 while (bbTo&bbTodas==0):
                     if not capturas:
+                        indexTo = self.indice(bbTo)
                         mov = engine.move.Movimento(self.corMover,
                                                     peca,
                                                     0,
@@ -376,13 +403,16 @@ class Tabuleiro:
                                                     bb,
                                                     bbTo,
                                                     self.roque,
-                                                    self.enPasant)
+                                                    self.enPasant,
+                                                    index,
+                                                    indexTo)
                         lista.append(mov)
                     if (bbTo & engine.constants.R[8]) != 0:
                         break
                     bbTo = bbTo << 8
                 if capturas and (bbTo &bbInimigas):
                     pecaInimiga = self.getPecaBB(1-self.corMover,bbTo)
+                    indexTo = self.indice(bbTo)
                     mov = engine.move.Movimento(self.corMover,
                                                 peca,
                                                 pecaInimiga,
@@ -390,13 +420,16 @@ class Tabuleiro:
                                                 bb,
                                                 bbTo,
                                                 self.roque,
-                                                self.enPasant)                                                
+                                                self.enPasant,
+                                                index,
+                                                indexTo)
                     lista.append(mov)
 
             if (bb != 0) and (bb & (engine.constants.C[1]) == 0):
                 bbTo = bb >> 1
                 while (bbTo&bbTodas==0):
                     if not capturas:
+                        indexTo = self.indice(bbTo)
                         mov = engine.move.Movimento(self.corMover,
                                                     peca,
                                                     0,
@@ -404,13 +437,16 @@ class Tabuleiro:
                                                     bb,
                                                     bbTo,
                                                     self.roque,
-                                                    self.enPasant)
+                                                    self.enPasant,
+                                                    index,
+                                                    indexTo)
                         lista.append(mov)
                     if (bbTo & engine.constants.C[1]) != 0:
                         break
                     bbTo = bbTo >> 1
                 if capturas and (bbTo &bbInimigas):
                     pecaInimiga = self.getPecaBB(1-self.corMover,bbTo)
+                    indexTo = self.indice(bbTo)
                     mov = engine.move.Movimento(self.corMover,
                                                 peca,
                                                 pecaInimiga,
@@ -418,13 +454,16 @@ class Tabuleiro:
                                                 bb,
                                                 bbTo,
                                                 self.roque,
-                                                self.enPasant)                                                
+                                                self.enPasant,
+                                                index,
+                                                indexTo)                                                
                     lista.append(mov)
 
             if (bb != 0) and (bb & (engine.constants.C[8]) == 0):
                 bbTo = bb << 1
                 while (bbTo&bbTodas==0):
                     if not capturas:
+                        indexTo = self.indice(bbTo)
                         mov = engine.move.Movimento(self.corMover,
                                                     peca,
                                                     0,
@@ -432,13 +471,14 @@ class Tabuleiro:
                                                     bb,
                                                     bbTo,
                                                     self.roque,
-                                                    self.enPasant)
+                                                    self.enPasant,index,indexTo)
                         lista.append(mov)
                     if (bbTo & engine.constants.C[8]) != 0:
                         break
                     bbTo = bbTo << 1
                 if capturas and (bbTo &bbInimigas):
                     pecaInimiga = self.getPecaBB(1-self.corMover,bbTo)
+                    indexTo = self.indice(bbTo)
                     mov = engine.move.Movimento(self.corMover,
                                                 peca,
                                                 pecaInimiga,
@@ -446,7 +486,7 @@ class Tabuleiro:
                                                 bb,
                                                 bbTo,
                                                 self.roque,
-                                                self.enPasant)                                                
+                                                self.enPasant,index,indexTo)                                                
                     lista.append(mov)
 
 
@@ -465,10 +505,12 @@ class Tabuleiro:
 
         while bbb>0:
             bb = (bbb & -bbb)  & 0xffffffffffffffff 
+            index = self.indice(bb)
             if (bb != 0) and (bb & (engine.constants.R[1]|engine.constants.C[1]) == 0):
                 bbTo = bb >> 9
                 while (bbTo&bbTodas==0):
                     if not capturas:
+                        indexTo = self.indice(bbTo)
                         mov = engine.move.Movimento(self.corMover,
                                                     peca,
                                                     0,
@@ -476,7 +518,8 @@ class Tabuleiro:
                                                     bb,
                                                     bbTo,
                                                     self.roque,
-                                                    self.enPasant)                                                
+                                                    self.enPasant,index,indexTo
+                                                    )                                                
                         lista.append(mov)
                    
                     if (bbTo & (engine.constants.R[1]|engine.constants.C[1])) != 0:
@@ -484,6 +527,7 @@ class Tabuleiro:
                     bbTo = bbTo >> 9
                 if capturas and (bbTo &bbInimigas):
                     pecaInimiga = self.getPecaBB(1-self.corMover,bbTo)
+                    indexTo = self.indice(bbTo)
                     mov = engine.move.Movimento(self.corMover,
                                                 peca,
                                                 pecaInimiga,
@@ -491,7 +535,7 @@ class Tabuleiro:
                                                 bb,
                                                 bbTo,
                                                 self.roque,
-                                                self.enPasant)                                                
+                                                self.enPasant,index,indexTo)                                                
                     lista.append(mov)
 
 
@@ -499,6 +543,7 @@ class Tabuleiro:
                 bbTo = bb >> 7
                 while (bbTo&bbTodas==0):
                     if not capturas:
+                        indexTo = self.indice(bbTo)
                         mov = engine.move.Movimento(self.corMover,
                                                     peca,
                                                     0,
@@ -506,13 +551,14 @@ class Tabuleiro:
                                                     bb,
                                                     bbTo,
                                                     self.roque,
-                                                    self.enPasant)
+                                                    self.enPasant,index,indexTo)
                         lista.append(mov)
                     if (bbTo & (engine.constants.R[1]|engine.constants.C[8]) != 0):
                         break
                     bbTo = bbTo >> 7
                 if capturas and (bbTo &bbInimigas):
                     pecaInimiga = self.getPecaBB(1-self.corMover,bbTo)
+                    indexTo = self.indice(bbTo)
                     mov = engine.move.Movimento(self.corMover,
                                                 peca,
                                                 pecaInimiga,
@@ -520,13 +566,14 @@ class Tabuleiro:
                                                 bb,
                                                 bbTo,
                                                 self.roque,
-                                                self.enPasant)                                                
+                                                self.enPasant,index,indexTo)                                                
                     lista.append(mov)
 
             if (bb != 0) and (bb & (engine.constants.R[8]|engine.constants.C[1]) == 0):
                 bbTo = bb << 7
                 while (bbTo&bbTodas==0):
                     if not capturas:
+                        indexTo = self.indice(bbTo)
                         mov = engine.move.Movimento(self.corMover,
                                                     peca,
                                                     0,
@@ -534,13 +581,14 @@ class Tabuleiro:
                                                     bb,
                                                     bbTo,
                                                     self.roque,
-                                                    self.enPasant)
+                                                    self.enPasant,index,indexTo)
                         lista.append(mov)
                     if (bbTo & (engine.constants.R[8]|engine.constants.C[1]) != 0):
                         break
                     bbTo = bbTo << 7
                 if capturas and (bbTo &bbInimigas):
                     pecaInimiga = self.getPecaBB(1-self.corMover,bbTo)
+                    indexTo = self.indice(bbTo)
                     mov = engine.move.Movimento(self.corMover,
                                                 peca,
                                                 pecaInimiga,
@@ -548,13 +596,15 @@ class Tabuleiro:
                                                 bb,
                                                 bbTo,
                                                 self.roque,
-                                                self.enPasant)                                                
+                                                self.enPasant,
+                                                index,indexTo)                                                
                     lista.append(mov)
 
             if (bb != 0) and (bb & (engine.constants.R[8]|engine.constants.C[8]) == 0):
                 bbTo = bb << 9
                 while (bbTo&bbTodas==0):
                     if not capturas:
+                        indexTo = self.indice(bbTo)
                         mov = engine.move.Movimento(self.corMover,
                                                     peca,
                                                     0,
@@ -562,13 +612,14 @@ class Tabuleiro:
                                                     bb,
                                                     bbTo,
                                                     self.roque,
-                                                    self.enPasant)
+                                                    self.enPasant,index,indexTo)
                         lista.append(mov)
                     if (bbTo & (engine.constants.R[8]|engine.constants.C[8]) != 0):
                         break
                     bbTo = bbTo << 9
                 if capturas and (bbTo &bbInimigas):
                     pecaInimiga = self.getPecaBB(1-self.corMover,bbTo)
+                    indexTo = self.indice(bbTo)
                     mov = engine.move.Movimento(self.corMover,
                                                 peca,
                                                 pecaInimiga,
@@ -576,7 +627,7 @@ class Tabuleiro:
                                                 bb,
                                                 bbTo,
                                                 self.roque,
-                                                self.enPasant)                                                
+                                                self.enPasant,index,indexTo)                                                
                     lista.append(mov)
             bbb = (bbb & (bbb-1))
 
@@ -596,6 +647,8 @@ class Tabuleiro:
 
                 while promos>0:
                     lsb = (promos & -promos)  & 0xffffffffffffffff
+                    indexTo = self.indice(lsb)
+                    index = self.indice(lsb<<8)
                     for pecapromo in [engine.constants.PQW, engine.constants.PKW, engine.constants.PRW, engine.constants.PBW]:
                         mov = engine.move.Movimento(engine.constants.WHITE,
                                                     peca,
@@ -604,12 +657,14 @@ class Tabuleiro:
                                                     lsb<<8,
                                                     lsb,
                                                     self.roque,
-                                                    self.enPasant)
+                                                    self.enPasant,index,indexTo)
                         lista.append(mov)
                     promos = promos & (promos -1)
 
                 while duplos > 0:
                     lsb = (duplos & -duplos)  & 0xffffffffffffffff
+                    indexTo = self.indice(lsb)
+                    index = self.indice(lsb<<16)
                     mov = engine.move.Movimento(engine.constants.WHITE,
                                                 peca,
                                                 0,
@@ -617,12 +672,14 @@ class Tabuleiro:
                                                 lsb<<16,
                                                 lsb,
                                                 self.roque,
-                                                self.enPasant)
+                                                self.enPasant,index,indexTo)
                     lista.append(mov)
                     duplos = duplos & (duplos -1)
 
                 while normais > 0:
                     lsb = (normais & -normais) & 0xffffffffffffffff
+                    indexTo = self.indice(lsb)
+                    index = self.indice(lsb<<8)
                     mov = engine.move.Movimento(engine.constants.WHITE,
                                                 peca,
                                                 0,
@@ -630,7 +687,7 @@ class Tabuleiro:
                                                 lsb<<8,
                                                 lsb,
                                                 self.roque,
-                                                self.enPasant)
+                                                self.enPasant,index,indexTo)
                     lista.append(mov)
                     normais = normais & (normais -1)
             else:
@@ -645,6 +702,7 @@ class Tabuleiro:
                     while bbPromos!=0:
                         bbTo = (bbPromos & -bbPromos) & 0xffffffffffffffff
                         pecaCap = self.getPecaBB(1,bbTo)
+                        indexTo = self.indice(bbTo)
                         for pecapromo in [engine.constants.PQW, engine.constants.PKW, engine.constants.PRW, engine.constants.PBW]:
                             mov = engine.move.Movimento(engine.constants.WHITE,
                                                         peca,
@@ -653,13 +711,14 @@ class Tabuleiro:
                                                         lsb,
                                                         bbTo,
                                                         self.roque,
-                                                        self.enPasant)
+                                                        self.enPasant,casa,indexTo)
                             lista.append(mov)
                         bbPromos = bbPromos &(bbPromos-1)
 
                     while bbToTodos != 0:
                         bbTo = (bbToTodos & -bbToTodos) & 0xffffffffffffffff
                         pecaCap = self.getPecaBB(1,bbTo)
+                        indexTo = self.indice(bbTo)
                         mov = engine.move.Movimento(engine.constants.WHITE,
                                                     peca,
                                                     pecaCap,
@@ -667,7 +726,7 @@ class Tabuleiro:
                                                     lsb,
                                                     bbTo,
                                                     self.roque,
-                                                    self.enPasant)
+                                                    self.enPasant,casa,indexTo)
                         lista.append(mov)
                         bbToTodos = bbToTodos & (bbToTodos -1)
                     bb = bb & (bb-1)
@@ -686,6 +745,8 @@ class Tabuleiro:
 
                 while promos>0:
                     lsb = (promos & -promos)  & 0xffffffffffffffff
+                    indexTo = self.indice(lsb)
+                    index = self.indice(lsb>>8)
                     for pecapromo in [engine.constants.PQB, engine.constants.PKB, engine.constants.PRB, engine.constants.PBB]:
                         mov = engine.move.Movimento(engine.constants.BLACK,
                                                     peca,
@@ -694,7 +755,8 @@ class Tabuleiro:
                                                     lsb>>8,
                                                     lsb,
                                                     self.roque,
-                                                    self.enPasant)
+                                                    self.enPasant,
+                                                    index, indexTo)
                         lista.append(mov)
                     promos = promos & (promos -1)
 
@@ -702,6 +764,8 @@ class Tabuleiro:
 
                 while duplos > 0:
                     lsb = (duplos & -duplos)  & 0xffffffffffffffff
+                    indexTo = self.indice(lsb)
+                    index = self.indice(lsb>>16)
                     mov = engine.move.Movimento(self.corMover,
                                                 peca,
                                                 0,
@@ -709,12 +773,14 @@ class Tabuleiro:
                                                 lsb>>16,
                                                 lsb,
                                                 self.roque,
-                                                self.enPasant)
+                                                self.enPasant,index,indexTo)
                     lista.append(mov)
                     duplos = duplos & (duplos -1)
 
                 while normais > 0:
                     lsb = (normais & -normais) & 0xffffffffffffffff
+                    indexTo = self.indice(lsb)
+                    index = self.indice(lsb>>8)
                     mov = engine.move.Movimento(self.corMover,
                                                 peca,
                                                 0,
@@ -722,7 +788,7 @@ class Tabuleiro:
                                                 lsb>>8,
                                                 lsb,
                                                 self.roque,
-                                                self.enPasant)
+                                                self.enPasant,index,indexTo)
                     lista.append(mov)
                     normais = normais & (normais -1)
             else:
@@ -734,9 +800,12 @@ class Tabuleiro:
 
                     bbPromos = bbToTodos & engine.constants.R[8]
                     bbToTodos = bbToTodos & ~bbPromos
+                    
+                    index = self.indice(lsb)
 
                     while bbPromos!=0:
                         bbTo = (bbPromos & -bbPromos) & 0xffffffffffffffff
+                        indexTo = self.indice(bbTo)
                         pecaCap = self.getPecaBB(1,bbTo)
                         for pecapromo in [engine.constants.PQB, engine.constants.PKB, engine.constants.PRB, engine.constants.PBB]:
                             mov = engine.move.Movimento(engine.constants.BLACK,
@@ -746,12 +815,13 @@ class Tabuleiro:
                                                         lsb,
                                                         bbTo,
                                                         self.roque,
-                                                        self.enPasant)
+                                                        self.enPasant,index,indexTo)
                         bbPromos = bbPromos &(bbPromos-1)
 
                     while bbToTodos != 0:
                         bbTo = (bbToTodos & -bbToTodos) & 0xffffffffffffffff
                         pecaCap = self.getPecaBB(0,bbTo)
+                        indexTo = self.indice(bbTo)
                         mov = engine.move.Movimento(engine.constants.BLACK,
                                                     peca,
                                                     pecaCap,
@@ -759,7 +829,7 @@ class Tabuleiro:
                                                     lsb,
                                                     bbTo,
                                                     self.roque,
-                                                    self.enPasant)
+                                                    self.enPasant,index,indexTo)
                         lista.append(mov)
                         bbToTodos = bbToTodos & (bbToTodos -1)
                     bb = bb & (bb-1)
@@ -768,13 +838,15 @@ class Tabuleiro:
         peca = self.corMover + engine.constants.PGW
         bb = self.board[peca]
         bbTodas = self.board[engine.constants.PB] | self.board[engine.constants.PW]
+        index = self.indice(bb)
         if capturas:
             bbInimigas = self.board[engine.constants.PB-self.corMover] 
-            bbTo = engine.constants.mRei[self.indice(bb)]&bbInimigas
+            bbTo = engine.constants.mRei[index]&bbInimigas
         else:
-            bbTo = engine.constants.mRei[self.indice(bb)]&~bbTodas
+            bbTo = engine.constants.mRei[index]&~bbTodas
         while bbTo > 0:
             lsb = (bbTo & -bbTo) & 0xffffffffffffffff
+            indexTo = self.indice(lsb)
             if capturas:
                 pecaAlvo = self.getPecaBB(1-self.corMover,lsb)
                 tipo = engine.constants.MCAP
@@ -788,7 +860,7 @@ class Tabuleiro:
                                         bb,
                                         lsb,
                                         self.roque,
-                                        self.enPasant)
+                                        self.enPasant,index,indexTo)
             lista.append(mov)
             bbTo = bbTo & (bbTo -1)
 
@@ -804,7 +876,7 @@ class Tabuleiro:
                                                         0,
                                                         0,
                                                         self.roque,
-                                                        self.enPasant)
+                                                        self.enPasant,0,0)
                             lista.append(mov)
                 if self.roque & (engine.constants.ROQUE_GW) != 0:
                     if (bbTodas & (engine.constants.index[59]|engine.constants.index[58]|engine.constants.index[57]))==0:
@@ -816,7 +888,7 @@ class Tabuleiro:
                                                         0,
                                                         0,
                                                         self.roque,
-                                                        self.enPasant)
+                                                        self.enPasant,0,0)
                             lista.append(mov)
             else:
                 if self.roque & (engine.constants.ROQUE_PB) != 0:
@@ -829,7 +901,7 @@ class Tabuleiro:
                                                         0,
                                                         0,
                                                         self.roque,
-                                                        self.enPasant)
+                                                        self.enPasant,0,0)
                             lista.append(mov)
                 if self.roque & (engine.constants.ROQUE_GB) != 0:
                     if (bbTodas & (engine.constants.index[1]|engine.constants.index[2]|engine.constants.index[3]))==0:
@@ -841,7 +913,7 @@ class Tabuleiro:
                                                         0,
                                                         0,
                                                         self.roque,
-                                                        self.enPasant)
+                                                        self.enPasant,0,0)
                             lista.append(mov)            
     def genMovimentos(self):
         self.listaMovs = []

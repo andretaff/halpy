@@ -1,0 +1,19 @@
+-----------
+Versao ALPHA 0 MJ
+20/06/2019 15:08
+221 testes 
+3067.734707593918 time
+-----------
+Versao ALPHA 0 MJ.001 (trasp table)
+20/06/2019 23:22
+221 testes 
+2874.5514113903046 time
+4438058 hits
+5999999 posições
+-----------
+Versao ALPHA 0 MJ.002 (trasp table novo rand)
+21/06/2019 00:11
+221 testes 
+2857.0631415843964 time
+4437870 hits
+5999999 posições

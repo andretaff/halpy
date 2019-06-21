@@ -110,3 +110,4 @@ MPROMOCAP = 30
 valores = [100,100,300,300,320,320,500,500,900,900,0,0]
 
 
+VERSAO = 'ALPHA 0 MJ.003 (single threading)'

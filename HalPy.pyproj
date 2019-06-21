@@ -24,14 +24,33 @@
     </Compile>
     <Compile Include="engine\bitboard.py" />
     <Compile Include="engine\board.py" />
+    <Compile Include="engine\temporizador.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="engine\transpTable.py" />
+    <Compile Include="engine\zobrist.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="engine\transpItem.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="engine\negamax.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="engine\constants.py" />
     <Compile Include="engine\move.py" />
+    <Compile Include="interface\game.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="interface\uci.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="interface\fenString.py" />
     <Compile Include="main.py" />
     <Compile Include="tests\mateIn2.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="util\rand64.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="__init__.py" />
@@ -39,6 +58,7 @@
   <ItemGroup>
     <Folder Include="engine" />
     <Folder Include="interface" />
+    <Folder Include="util\" />
     <Folder Include="tests\" />
   </ItemGroup>
   <ItemGroup>

@@ -1,15 +1,23 @@
 # -*- coding: utf-8 -*-
-from engine import negamax,board
-import interface.fenString
 
-fenReader = interface.fenString.fenString()
+import interface.uci
+import time
+import threading
 
-tabuleiro = fenReader.tabuleiroPadrao()
+uci = interface.uci.UCI()
 
-tabuleiro.print()
+def inputThread():
+    while uci.ativa:
+        comando = input()
+        uci.addComandoIn(comando)
+        time.sleep(0.3)
 
-negamax = negamax.Negamax(tabuleiro)
 
-mov = negamax.iniciar()
 
-mov.print()
+uci.start()
+inp = threading.Thread(target = inputThread,args=())
+inp.start()
+
+while uci.ativa:
+    time.sleep(0.1)
+
